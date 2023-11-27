@@ -27,14 +27,21 @@ color_bg_200="#292929"
 color_bg_300="#404040"
 
 
+
+
 def resize(scale_value):
 	scale_value = float(scale_value)
+
 	for widget in root.winfo_children():
+		print(widget.winfo_class())
 		if "font" in widget.keys():
 			font = widget.cget("font")
 			widget.configure(font=(font[0], int(scale_value * 10)))
-		if widget.winfo_class() == 'Button':
+		if widget.winfo_class() == 'TButton':
+			
 			widget.configure(width=int(scale_value * 10))
+
+
 
 
 def summit():
@@ -47,20 +54,22 @@ def summit():
     print(name,password)
 
 
-# open a tk window
 res_x = 800
 res_y = 400
 root = tk.Tk()
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
+base_dims=(2560,1440)
+scale_ratio=3*screen_width/base_dims[0]
 print(screen_width,screen_height)
+print(scale_ratio)
 style = ttk.Style()
 style.theme_use('alt')
 style.map('TButton', background=[('active',color_primary_100),('!active',color_primary_200)])
-style.configure('TButton',fontscale=5.5,foreground=color_accent_200)
+style.configure('TButton',font=('Helvetica', int(5*scale_ratio )),foreground=color_accent_200)
 
 root.title("Arduino COMS")
-root.geometry(f"{res_x}x{res_y}")
+root.geometry(f"{int(res_x)}x{int(res_y)}")
 # change root background color
 root.configure(bg=color_bg_300)
 
@@ -69,7 +78,7 @@ root.configure(bg=color_bg_300)
 username_tk=tk.StringVar()
 password_tk=tk.StringVar()
 
-# add a button
+
 button = ttk.Button(root, text="Entrar",command=summit,style='TButton')
 
 
@@ -83,13 +92,10 @@ name_text.grid(row=0,column=0)
 name_entry.grid(row=0,column=1)
 password_text.grid(row=1,column=0)
 password_entry.grid(row=1,column=1)
-
 button.grid(row=2,column=1)
 
-scale = tk.Scale(root, from_=1, to=10, orient='horizontal', command=resize)
-scale.set(1)
-scale.grid(row=3, column=0, columnspan=2)
-root.mainloop()
+resize(scale_ratio)
+
 root.mainloop()
 
 
