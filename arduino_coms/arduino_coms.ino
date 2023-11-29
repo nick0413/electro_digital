@@ -1,33 +1,19 @@
-String InBytes;
+int x; 
+int led=LED_BUILTIN;
 
+void setup() { 
 
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-  pinMode(LED_BUILTIN,OUTPUT);
+	Serial.begin(115200); 
+	Serial.setTimeout(1); 
+	pinMode(led, OUTPUT);
+} 
+void loop() { 
+	while (!Serial.available()); 
+	x = Serial.readString().toInt(); 
+	if (x == 1) 
+		{digitalWrite(led, HIGH);} 
+	else if (x == 0) 
+		{digitalWrite(led, LOW);}
+	Serial.print(x + 1); 
+} 
 
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-  if(Serial.available()>0)
-    {
-      InBytes = Serial.readStringUntil('\n');
-      Serial.print(InBytes);
-      if(InBytes=="on")
-        {
-          digitalWrite(LED_BUILTIN,HIGH);
-          Serial.write("led on");
-        }
-      else if ( InBytes == "off")
-        {
-          digitalWrite(LED_BUILTIN,LOW);
-          Serial.write("led off");
-        }
-      else
-        {
-          Serial.write("invalid command");
-        }
-    }
-
-}

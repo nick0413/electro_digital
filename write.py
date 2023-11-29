@@ -1,5 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
+import serial
+import time
+arduino = serial.Serial(port='COM7', baudrate=115200, timeout=.1) 
+
 
 
 color_primary_100="#00BFA5"
@@ -13,7 +17,12 @@ color_bg_100="#1A1A1A"
 color_bg_200="#292929"
 color_bg_300="#404040"
 
-
+def write_read(x): 
+	print(x)
+	arduino.write(bytes( str(x), 'utf-8')) 
+	time.sleep(0.05) 
+	data = arduino.readline() 
+	return int(data)
 
 
 def resize(scale_value):
@@ -99,7 +108,10 @@ root.configure(bg=color_bg_300)
 
 username_tk=tk.StringVar()
 password_tk=tk.StringVar()
+number_entry_tk=tk.IntVar()
+output_text=tk.StringVar()
 
+output_text.set("xd")
 
 button = ttk.Button(root, text="Entrar",command=summit,style='TButton')
 compare_button=ttk.Button(root, text="Comparar",command=compare_password ,style='TButton')
@@ -108,6 +120,9 @@ name_entry = tk.Entry(root,textvariable=username_tk)
 name_text=tk.Label(root,text="Usuario",bg=color_bg_300,fg=color_text_100)
 password_entry = tk.Entry(root,textvariable=password_tk)
 password_text=tk.Label(root,text="Contraseña",bg=color_bg_300,fg=color_text_100)
+number_entry = tk.Entry(root,textvariable=number_entry_tk)
+number_pass=ttk.Button(root,text='enviar arduino',command=lambda:write_read(number_entry_tk.get()),style='TButton')
+output_label=tk.Label(root,textvariable=output_text,bg=color_bg_300,fg=color_text_100)
 
 
 name_text.grid(row=0,column=0)
@@ -116,6 +131,10 @@ password_text.grid(row=1,column=0)
 password_entry.grid(row=1,column=1)
 button.grid(row=2,column=1)
 compare_button.grid(row=3,column=1)
+output_label.grid(row=2,column=2)
+
+number_entry.grid(row=4,column=1)
+number_pass.grid(row=5,column=1)
 
 resize(scale_ratio)
 
