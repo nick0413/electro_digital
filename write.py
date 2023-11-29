@@ -1,20 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-'''
-    --primary-100:#00BFA5;
-    --primary-200:#00a189;
-    --primary-300:#005f4b;
-    --accent-100:#FF4081;
-    --accent-200:#ffe4ff;
-    --text-100:#FFFFFF;
-    --text-200:#e0e0e0;
-    --bg-100:#1A1A1A;
-    --bg-200:#292929;
-    --bg-300:#404040;
-      
-      
-'''
+
 color_primary_100="#00BFA5"
 color_primary_200="#00a189"
 color_primary_300="#005f4b"
@@ -43,15 +30,50 @@ def resize(scale_value):
 
 
 
+def save_password(username,password):
+	with open("passwords.txt","a") as file:
+		file.write(f"{username},{password}\n")
+	
+def compare_password():
+	name=username_tk.get()
+	password=password_tk.get()+"\n"
 
-def summit():
-    name=username_tk.get()
-    password=password_tk.get()
+	if (name=="" or password==""):
+		print("no hay nombre ni contraseña")
+		return
+	
+	with open("passwords.txt","r") as file:
+		for line in file:
+			line=line.split(",")
+			if (line[0]==name):
+				if (line[1]==password):
+					print("contraseña correcta")
+					return
+				else:
+					print("contraseña incorrecta")
+					return
+		print("no se encontro el usuario")
+		return
 
-    username_tk.set("")
-    password_tk.set("")
+def summit():	
+	name=username_tk.get()
+	password=password_tk.get()
 
-    print(name,password)
+	if (name==""):
+		if(password==""):
+			print("no hay nombre ni contraseña")
+		if(password!=""):
+			print("no hay nombre")
+	if (password=="" and name!=""):
+		print("no hay contraseña")
+		return
+
+	username_tk.set("")
+	password_tk.set("")
+
+	print(name,password)
+	if (name!="" and password!=""):
+		save_password(name,password)
 
 
 res_x = 800
@@ -80,7 +102,7 @@ password_tk=tk.StringVar()
 
 
 button = ttk.Button(root, text="Entrar",command=summit,style='TButton')
-
+compare_button=ttk.Button(root, text="Comparar",command=compare_password ,style='TButton')
 
 name_entry = tk.Entry(root,textvariable=username_tk)
 name_text=tk.Label(root,text="Usuario",bg=color_bg_300,fg=color_text_100)
@@ -93,6 +115,7 @@ name_entry.grid(row=0,column=1)
 password_text.grid(row=1,column=0)
 password_entry.grid(row=1,column=1)
 button.grid(row=2,column=1)
+compare_button.grid(row=3,column=1)
 
 resize(scale_ratio)
 
