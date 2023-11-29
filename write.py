@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 import serial
 import time
-arduino = serial.Serial(port='COM7', baudrate=115200, timeout=.1) 
+import re
+arduino = serial.Serial(port='COM7', baudrate=9600, timeout=.1) 
 
 
 
@@ -17,12 +18,39 @@ color_bg_100="#1A1A1A"
 color_bg_200="#292929"
 color_bg_300="#404040"
 
+found_match=False
+
+def get_int_after_hash(text: str) -> int:
+    match = re.search('#(\d+)', text)
+    if match:
+        return int(match.group(1))
+    else:
+        return None
+
+def found_match(text: str):
+	match_id=get_int_after_hash(text)
+	if match_id!=None:
+		found_match=True
+		print(match_id)
+		arduino_log.set(match_id)
+		output_text.set(f"match encontrado {match_id}")
+		return match_id
+
+
 def write_read(x): 
-	print(x)
 	arduino.write(bytes( str(x), 'utf-8')) 
 	time.sleep(0.05) 
 	data = arduino.readline() 
-	return int(data)
+	return data
+
+def read():
+	data = arduino.readline().decode().strip()
+	# print("-----")
+	# print(data)
+	if data!="":
+		print(data)
+		arduino_log.set(data)
+	root.after(100,read)
 
 
 def resize(scale_value):
@@ -42,26 +70,31 @@ def resize(scale_value):
 def save_password(username,password):
 	with open("passwords.txt","a") as file:
 		file.write(f"{username},{password}\n")
+
+	output_text.set("usuario guardado")
+	write_read(1)
 	
 def compare_password():
 	name=username_tk.get()
 	password=password_tk.get()+"\n"
 
 	if (name=="" or password==""):
-		print("no hay nombre ni contraseña")
+		output_text.set("no hay nombre ni contraseña")
 		return
 	
+	write_read(2)
 	with open("passwords.txt","r") as file:
 		for line in file:
 			line=line.split(",")
 			if (line[0]==name):
 				if (line[1]==password):
-					print("contraseña correcta")
+					output_text.set("contraseña correcta")
 					return
 				else:
-					print("contraseña incorrecta")
+					output_text.set("contraseña incorrecta")
 					return
-		print("no se encontro el usuario")
+		output_text.set("no se encontro el usuario")
+	
 		return
 
 def summit():	
@@ -70,11 +103,11 @@ def summit():
 
 	if (name==""):
 		if(password==""):
-			print("no hay nombre ni contraseña")
+			output_text.set("no hay nombre ni contraseña")
 		if(password!=""):
-			print("no hay nombre")
+			output_text.set("no hay nombre")
 	if (password=="" and name!=""):
-		print("no hay contraseña")
+		output_text.set("no hay contraseña")
 		return
 
 	username_tk.set("")
@@ -110,6 +143,7 @@ username_tk=tk.StringVar()
 password_tk=tk.StringVar()
 number_entry_tk=tk.IntVar()
 output_text=tk.StringVar()
+arduino_log=tk.StringVar()
 
 output_text.set("xd")
 
@@ -122,8 +156,9 @@ password_entry = tk.Entry(root,textvariable=password_tk)
 password_text=tk.Label(root,text="Contraseña",bg=color_bg_300,fg=color_text_100)
 number_entry = tk.Entry(root,textvariable=number_entry_tk)
 number_pass=ttk.Button(root,text='enviar arduino',command=lambda:write_read(number_entry_tk.get()),style='TButton')
-output_label=tk.Label(root,textvariable=output_text,bg=color_bg_300,fg=color_text_100)
-
+output_label=tk.Label(root,textvariable=output_text,bg=color_bg_300,fg=color_text_100,wraplength=200)
+arduino_log_label=tk.Label(root,textvariable=arduino_log,bg=color_bg_300,fg=color_text_100,wraplength=200)
+# update_button=ttk.Button(root,text='actualizar arduino',command=read,style='TButton')
 
 name_text.grid(row=0,column=0)
 name_entry.grid(row=0,column=1)
@@ -131,13 +166,16 @@ password_text.grid(row=1,column=0)
 password_entry.grid(row=1,column=1)
 button.grid(row=2,column=1)
 compare_button.grid(row=3,column=1)
-output_label.grid(row=2,column=2)
+output_label.grid(row=2,column=3,padx=50)
+arduino_log_label.grid(row=3,column=3,padx=50)
+# update_button.grid(row=3,column=3)
 
 number_entry.grid(row=4,column=1)
 number_pass.grid(row=5,column=1)
 
 resize(scale_ratio)
 
+root.after(100,read)
 root.mainloop()
 
 

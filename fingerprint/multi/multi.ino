@@ -181,7 +181,7 @@ uint8_t getFingerprintEnroll()
 	return true;
 }
 
-
+int count=0;
 
 void setup()
 	{
@@ -215,7 +215,7 @@ void setup()
 		finger.getTemplateCount();
 
 		if (finger.templateCount == 0) 
-			{Serial.print("Sensor doesn't contain any fingerprint data. Please run the 'enroll' example.");}
+			{Serial.print("No hay huellas guardadas, debe registrar al menos una huella para continuar");}
 		else 
 			{
 				Serial.println("Waiting for valid finger...");
@@ -238,10 +238,11 @@ uint8_t readnumber(void)
 void loop()                     // run over and over again
   {
     // getFingerprintID();
-	Serial.print("1 si quiere regustrar una huella, 2 si quiere verificar una huella\n");
+	count++;
+	Serial.print("Desea registrar una nueva huella, o quiere verificar una huella registrada\n");
 	event=readnumber();
 	if(event==1)
-		{	Serial.print("escriba que numero quierepara su huella\n") ;
+		{	Serial.print("escriba que numero quiere para su huella\n") ;
 			id=readnumber();
 			Serial.print("Guardando #");
   			Serial.println(id);
