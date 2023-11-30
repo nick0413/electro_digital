@@ -18,16 +18,35 @@ password_tk=tk.StringVar()
 number_entry_tk=tk.IntVar()
 output_text=tk.StringVar()
 arduino_log=tk.StringVar()
+wraplength_status_column=350
 
 log_tittle=tk.StringVar()
 length=0
 users=[]
 next_id=0
+current_user_id=[0]
 
-# -------------------  Funciones -------------------
+# -------------------  Funciones -------------------\
 
-def check_database_length():
+def get_int_after_hash(text: str) -> int:
+	match = re.search('#(\d+)', text)
+	if match:
+		return int(match.group(1))
+	else:
+		return None
+
+def found_match(text: str) -> int:
+	match_id=get_int_after_hash(text)
+	if match_id!=None:
+		found_match=True
+		print("match_id",match_id)
+		arduino_log.set(match_id)
+		# output_text.set(f"match encontrado {match_id}")
+		return match_id
+
+def check_database_length()-> int:
 	with open("passwords.txt","a+") as file:
+		file.seek(0)
 		lines=file.readlines()
 		return(len(lines))
 	
@@ -39,14 +58,15 @@ def check_users_indatabase():
 			user_id=line[2]
 
 
-def in_database(name,password):
-	password=password+"\n"
+def in_database(name) -> bool:
 	with open("passwords.txt","a+") as file:
-		for line in file:
+		file.seek(0)
+		lines=file.readlines()
+		for line in lines:
 			line=line.split(",")
+
 			if (line[0]==name):
-				if (line[1]==password):
-					return True
+				return True
 
 		return False
 	
@@ -73,7 +93,8 @@ def save_password(username,password):
 	output_text.set("usuario guardado")
 	write_read(1)
 
-def check_password(name,password):
+
+def check_valid_entry(name,password):
 
 	if (name==""):
 		if(password==""):
@@ -88,33 +109,38 @@ def check_password(name,password):
 	
 	return True
 
-def write_read(x): 
-	arduino.write(bytes( str(x), 'utf-8')) 
-	time.sleep(0.05) 
-	data = arduino.readline() 
-	return data
 
-def compare_password():
+
+def compare_password(current_user_id):
 	name=username_tk.get()
-	password=password_tk.get()+"\n"
+	password=password_tk.get()
+	# username_tk.set("")
+	# password_tk.set("")
 
-	if not check_password(name,password):
+	if not check_valid_entry(name,password):
 		return
 	else:
 		output_text.set("Nombre o contraseña no pueden estar vacios")
 	
 	passed=False
+	print("comparing")
 	with open("passwords.txt","r") as file:
 		for line in file:
 			line=line.split(",")
+
 			if (line[0]==name):
 				if (line[1]==password):
+
 					output_text.set("contraseña correcta")
+					current_user_id.append(int( line[2].replace("\n","")))
+					print("current user id:",current_user_id)
 					passed=True
 				else:
 					output_text.set("contraseña incorrecta")
 					return
-		output_text.set("no se encontro el usuario")
+		if not in_database(name):
+			output_text.set("usuario no existe")
+			return
 	if passed:
 		write_read(2)
 
@@ -128,8 +154,8 @@ def summit():
 
 
 	if (name!="" and password!=""):
-		if check_password(name,password):
-			if not in_database(name,password):
+		if check_valid_entry(name,password):
+			if not in_database(name):
 
 
 				username_tk.set("")
@@ -143,13 +169,12 @@ def resize(scale_value):
 	scale_value = float(scale_value)
 
 	for widget in root.winfo_children():
-		# print(widget.winfo_class())
 		if "font" in widget.keys():
 			font = widget.cget("font")
 			dict_font=tk.font.Font(font=widget["font"]).actual() # diccionario con los valores de la fuente
 
 			size=dict_font["size"]
-			# print(size)
+
 			
 			widget.configure(font=(font[0], int(scale_value * size)))
 
@@ -157,11 +182,41 @@ def resize(scale_value):
 			
 			widget.configure(width=int(scale_value * 10))
 
+
+
+def write_read(x): 
+	arduino.write(bytes( str(x), 'utf-8')) 
+	time.sleep(0.05) 
+	data = arduino.readline() 
+	return data
+
 def read():
 	data = arduino.readline().decode().strip()
 	if data!="":
-		print(data)
-		arduino_log.set(data)
+		if data!='.':
+			print("log.",data)
+			arduino_log.set(data)
+
+	if data=='escriba que numero quiere para su huella':
+		write_read(next_id)
+
+	if data=='Prints matched!':
+		output_text.set(f"Huella guardada, usuario numero {next_id}")
+		arduino_log.set("")
+
+	if "Found ID" in data:
+		found_id=found_match(data)
+		print("found match",found_id,current_user_id[-1])
+		if found_id==current_user_id[-1]:
+			output_text.set(f"Huella encontrada, acceso a usuario {found_id}")
+		else:
+			output_text.set(f"Acceso denegado")
+			arduino_log.set("")
+	if data=="Did not find a match":
+		output_text.set(f"Acceso denegado")
+		arduino_log.set("")
+
+	
 	root.after(100,read)
 
 
@@ -190,7 +245,7 @@ log_tittle.set("Estatus actual:")
 
 
 Register_button = ttk.Button(root, text="Entrar",command=summit,style="TButton")
-compare_button=ttk.Button(root, text="Comparar",command=compare_password ,style='TButton')
+compare_button=ttk.Button(root, text="Comparar",command=lambda: compare_password(current_user_id) ,style='TButton')
 
 name_entry = tk.Entry(root,textvariable=username_tk)
 name_text=tk.Label(root,text="Usuario",bg=color_bg_300,fg=color_text_100)
@@ -199,8 +254,8 @@ password_text=tk.Label(root,text="Contraseña",bg=color_bg_300,fg=color_text_100
 number_entry = tk.Entry(root,textvariable=number_entry_tk)
 
 status_title=tk.Label(root,textvariable=log_tittle,bg=color_bg_300,fg=color_text_100,font=('Helvetica', int(2*scale_ratio )),padx=30,pady=10)
-output_label=tk.Label(root,textvariable=output_text,bg=color_bg_300,fg=color_text_100,font=('Helvetica', int(2*scale_ratio )),wraplength=400)
-arduino_log_label=tk.Label(root,textvariable=arduino_log,bg=color_bg_300,fg=color_text_100,font=('Helvetica', int(2*scale_ratio )),wraplength=400)
+output_label=tk.Label(root,textvariable=output_text,bg=color_bg_300,fg=color_text_100,font=('Helvetica', int(2*scale_ratio )),wraplength=wraplength_status_column)
+arduino_log_label=tk.Label(root,textvariable=arduino_log,bg=color_bg_300,fg=color_text_100,font=('Helvetica', int(2*scale_ratio )),wraplength=wraplength_status_column)
 
 # -------------------  Posicionamiento de elementos -------------------
 name_text.grid(row=0,column=0)
