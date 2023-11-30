@@ -3,7 +3,7 @@ from tkinter import ttk
 import serial
 import time
 import re
-arduino = serial.Serial(port='COM7', baudrate=9600, timeout=.1) 
+arduino = serial.Serial(port='COM5', baudrate=9600, timeout=.1) 
 
 
 
@@ -17,6 +17,7 @@ color_text_200="#e0e0e0"
 color_bg_100="#1A1A1A"
 color_bg_200="#292929"
 color_bg_300="#404040"
+
 
 found_match=False
 
@@ -45,8 +46,6 @@ def write_read(x):
 
 def read():
 	data = arduino.readline().decode().strip()
-	# print("-----")
-	# print(data)
 	if data!="":
 		print(data)
 		arduino_log.set(data)
@@ -156,8 +155,8 @@ password_entry = tk.Entry(root,textvariable=password_tk)
 password_text=tk.Label(root,text="Contraseña",bg=color_bg_300,fg=color_text_100)
 number_entry = tk.Entry(root,textvariable=number_entry_tk)
 number_pass=ttk.Button(root,text='enviar arduino',command=lambda:write_read(number_entry_tk.get()),style='TButton')
-output_label=tk.Label(root,textvariable=output_text,bg=color_bg_300,fg=color_text_100,wraplength=200)
-arduino_log_label=tk.Label(root,textvariable=arduino_log,bg=color_bg_300,fg=color_text_100,wraplength=200)
+output_label=tk.Label(root,textvariable=output_text,bg=color_bg_300,fg=color_text_100,wraplength=400)
+arduino_log_label=tk.Label(root,textvariable=arduino_log,bg=color_bg_300,fg=color_text_100,wraplength=400)
 # update_button=ttk.Button(root,text='actualizar arduino',command=read,style='TButton')
 
 name_text.grid(row=0,column=0)
