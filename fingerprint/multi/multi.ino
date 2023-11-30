@@ -29,52 +29,53 @@ uint8_t getFingerprintEnroll()
 
 	int p = -1;
 	Serial.print("Waiting for valid finger to enroll as #"); Serial.println(id);
-	while (p != FINGERPRINT_OK) 
+	while (p != FINGERPRINT_OK) // Toma de la imagen de la huella
 		{
-		p = finger.getImage();
+			p = finger.getImage();
 
-		switch (p) 
-			{
-			case FINGERPRINT_OK:
-				Serial.println("Image taken");
-				break;
-			case FINGERPRINT_NOFINGER:
-				Serial.println(".");
-				break;
-			case FINGERPRINT_PACKETRECIEVEERR:
-				Serial.println("Communication error");
-				break;
-			case FINGERPRINT_IMAGEFAIL:
-				Serial.println("Imaging error");
-				break;
-			default:
-				Serial.println("Unknown error");
-				break;
-			}
+			switch (p) 
+				{
+				case FINGERPRINT_OK:
+					Serial.println("Image taken");
+					break;
+				case FINGERPRINT_NOFINGER:
+					Serial.println(".");
+					break;
+				case FINGERPRINT_PACKETRECIEVEERR:
+					Serial.println("Communication error");
+					break;
+				case FINGERPRINT_IMAGEFAIL:
+					Serial.println("Imaging error");
+					break;
+				default:
+					Serial.println("Unknown error");
+					break;
+				}
 		}
 
-	// OK success!
+
 	p = finger.image2Tz(1);
-	switch (p) {
-		case FINGERPRINT_OK:
-		Serial.println("Image converted");
-		break;
-		case FINGERPRINT_IMAGEMESS:
-		Serial.println("Image too messy");
-		return p;
-		case FINGERPRINT_PACKETRECIEVEERR:
-		Serial.println("Communication error");
-		return p;
-		case FINGERPRINT_FEATUREFAIL:
-		Serial.println("Could not find fingerprint features");
-		return p;
-		case FINGERPRINT_INVALIDIMAGE:
-		Serial.println("Could not find fingerprint features");
-		return p;
-		default:
-		Serial.println("Unknown error");
-		return p;
-	}
+	switch (p) //procesamiento de la imagen de la huella
+		{
+			case FINGERPRINT_OK:
+			Serial.println("Image converted");
+			break;
+			case FINGERPRINT_IMAGEMESS:
+			Serial.println("Image too messy");
+			return p;
+			case FINGERPRINT_PACKETRECIEVEERR:
+			Serial.println("Communication error");
+			return p;
+			case FINGERPRINT_FEATUREFAIL:
+			Serial.println("Could not find fingerprint features");
+			return p;
+			case FINGERPRINT_INVALIDIMAGE:
+			Serial.println("Could not find fingerprint features");
+			return p;
+			default:
+			Serial.println("Unknown error");
+			return p;
+		}
 
 	Serial.println("Remove finger");
 	delay(2000);
@@ -82,11 +83,12 @@ uint8_t getFingerprintEnroll()
 	while (p != FINGERPRINT_NOFINGER) 
 		{p = finger.getImage();}
 
-	Serial.print("ID "); Serial.println(id);
+	Serial.print("ID "); 
+	Serial.println(id);
 	p = -1;
 	Serial.println("Place same finger again");
 
-	while (p != FINGERPRINT_OK) 
+	while (p != FINGERPRINT_OK) //volver a tomar la imagen de la huella para verificar informacion tomada
 		{
 			p = finger.getImage();
 			switch (p) 
@@ -112,7 +114,7 @@ uint8_t getFingerprintEnroll()
 	// OK success!
 
 	p = finger.image2Tz(2);
-	switch (p) 
+	switch (p) // procesamiento de la segunda imagen de la huella
 		{
 			case FINGERPRINT_OK:
 				Serial.println("Image converted");
@@ -134,8 +136,9 @@ uint8_t getFingerprintEnroll()
 				return p;
 		}
 
-	// OK converted!
-	Serial.print("Creating model for #");  Serial.println(id);
+
+	Serial.print("Creating model for #");
+	Serial.println(id);
 
 	p = finger.createModel();
 	if (p == FINGERPRINT_OK) 
@@ -235,9 +238,9 @@ uint8_t readnumber(void)
     return num;
   }
 
-void loop()                     // run over and over again
+void loop()
   {
-    // getFingerprintID();
+
 	count++;
 	Serial.print("Desea registrar una nueva huella, o quiere verificar una huella registrada\n");
 	event=readnumber();
@@ -253,17 +256,14 @@ void loop()                     // run over and over again
 			Serial.print("2\n");
 
 			while (!found_finger)
-			{
-				getFingerprintID();
-			}
+				{getFingerprintID();}
+
 			found_finger=false;
-			
-			
-		
+
 		}
 
 	Serial.print("\nloop\n");
-    delay(50);            //don't ned to run this at full speed.
+    delay(50);
   }
 
 uint8_t getFingerprintID() 
@@ -338,18 +338,22 @@ uint8_t getFingerprintID()
 }
 
 // returns -1 if failed, otherwise returns ID #
-int getFingerprintIDez() {
-  uint8_t p = finger.getImage();
-  if (p != FINGERPRINT_OK)  return -1;
+int getFingerprintIDez() 
+	{
+		uint8_t p = finger.getImage();
+		if (p != FINGERPRINT_OK)  
+			return -1;
 
-  p = finger.image2Tz();
-  if (p != FINGERPRINT_OK)  return -1;
+		p = finger.image2Tz();
+		if (p != FINGERPRINT_OK)  
+			return -1;
 
-  p = finger.fingerFastSearch();
-  if (p != FINGERPRINT_OK)  return -1;
+		p = finger.fingerFastSearch();
+		if (p != FINGERPRINT_OK)  
+			return -1;
 
-  // found a match!
-  Serial.print("Found ID #"); Serial.print(finger.fingerID);
-  Serial.print(" with confidence of "); Serial.println(finger.confidence);
-  return finger.fingerID;
-}
+		// found a match!
+		Serial.print("Found ID #"); Serial.print(finger.fingerID);
+		Serial.print(" with confidence of "); Serial.println(finger.confidence);
+		return finger.fingerID;
+	}

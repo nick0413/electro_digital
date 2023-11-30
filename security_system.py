@@ -18,6 +18,9 @@ password_tk=tk.StringVar()
 number_entry_tk=tk.IntVar()
 output_text=tk.StringVar()
 arduino_log=tk.StringVar()
+
+user_secret=tk.StringVar()
+
 wraplength_status_column=350
 
 log_tittle=tk.StringVar()
@@ -90,6 +93,9 @@ def save_password(username,password):
 		next_id=get_next_id()
 		file.write(f"{username},{password},{next_id}\n")
 
+	with open("secrets.txt","a+") as file:
+		file.write(f"{next_id},{user_secret.get()}\n")
+
 	output_text.set("usuario guardado")
 	write_read(1)
 
@@ -149,7 +155,7 @@ def compare_password(current_user_id):
 def summit():	
 	name=username_tk.get()
 	password=password_tk.get()
-
+	secret=user_secret.get()
 	
 
 
@@ -157,13 +163,17 @@ def summit():
 		if check_valid_entry(name,password):
 			if not in_database(name):
 
-
+				if secret=="":
+					output_text.set("escriba su secreto")
+					return
 				username_tk.set("")
 				password_tk.set("")
+				user_secret.set("")
 				save_password(name,password)
 				
 			else:
 				output_text.set("el usuario ya existe")
+			
 
 def resize(scale_value):
 	scale_value = float(scale_value)
@@ -183,9 +193,33 @@ def resize(scale_value):
 			widget.configure(width=int(scale_value * 10))
 
 
+def failed_fingerPrint():
+	with open("passwords.txt", 'r') as file:
+		lines = file.readlines()
+		lines = lines[:-1]
 
-def write_read(x): 
-	arduino.write(bytes( str(x), 'utf-8')) 
+	with open("passwords.txt", 'w') as file:
+		file.writelines(lines)
+
+	with open("secrets.txt", 'r') as file:
+		lines = file.readlines()
+		lines = lines[:-1]
+
+	with open("secrets.txt", 'w') as file:
+		file.writelines(lines)
+
+def access_granted():
+	print("access granted")
+	with open("secrets.txt","r") as file:
+		for line in file:
+			
+			line=line.split(",")
+			print("line",line)
+			if int(line[0])==current_user_id[-1]:
+				output_text.set(f"Acceso concedido, su secreto es: {line[1]}")
+
+def write_read(command): 
+	arduino.write(bytes( str(command), 'utf-8')) 
 	time.sleep(0.05) 
 	data = arduino.readline() 
 	return data
@@ -208,16 +242,23 @@ def read():
 		found_id=found_match(data)
 		print("found match",found_id,current_user_id[-1])
 		if found_id==current_user_id[-1]:
-			output_text.set(f"Huella encontrada, acceso a usuario {found_id}")
+			access_granted()
 		else:
 			output_text.set(f"Acceso denegado")
 			arduino_log.set("")
+
 	if data=="Did not find a match":
 		output_text.set(f"Acceso denegado")
 		arduino_log.set("")
 
+	if data=="Fingerprints did not match":
+		output_text.set(f"Usuario no se registro correctamente")
+		failed_fingerPrint()
+		
+
 	
 	root.after(100,read)
+
 
 
 
@@ -257,6 +298,8 @@ status_title=tk.Label(root,textvariable=log_tittle,bg=color_bg_300,fg=color_text
 output_label=tk.Label(root,textvariable=output_text,bg=color_bg_300,fg=color_text_100,font=('Helvetica', int(2*scale_ratio )),wraplength=wraplength_status_column)
 arduino_log_label=tk.Label(root,textvariable=arduino_log,bg=color_bg_300,fg=color_text_100,font=('Helvetica', int(2*scale_ratio )),wraplength=wraplength_status_column)
 
+secret_entry=tk.Entry(root,textvariable=user_secret)
+secret_label=tk.Label(root,text="Escriba su secreto",bg=color_bg_300,fg=color_text_100,font=('Helvetica', int(2*scale_ratio )),wraplength=wraplength_status_column)
 # -------------------  Posicionamiento de elementos -------------------
 name_text.grid(row=0,column=0)
 name_entry.grid(row=0,column=1)
@@ -264,8 +307,8 @@ password_text.grid(row=1,column=0)
 password_entry.grid(row=1,column=1)
 
 
-Register_button.grid(row=2,column=1)
-compare_button.grid(row=3,column=1)
+Register_button.grid(row=3,column=1)
+compare_button.grid(row=4,column=1)
 
 
 
@@ -273,6 +316,8 @@ status_title.grid(row=0,column=2)
 output_label.grid(row=2,column=2,padx=50)
 arduino_log_label.grid(row=3,column=2,padx=50)
 
+secret_entry.grid(row=2,column=1,pady=3)
+secret_label.grid(row=2,column=0,pady=3)
 
 # -------------------  Ejecucion de la ventana -------------------
 length=check_database_length()
